@@ -7,13 +7,13 @@ from torch.autograd import Variable
 from ..utils import batch_iterator
 
 
-def train_discriminator(disc_model, gen_model, opt, alph_X, train_X, train_Y, n_epochs=50):
+def train_discriminator(disc_model, gen_model, opt, train_X, train_Y, n_epochs=50):
     cur_loss = 0
     for epoch in range(n_epochs):
         disc_model.train()
         gen_model.eval()
         start_time = time.time()
-        for i, (x, y) in enumerate(batch_iterator(train_X[:100], train_Y[:100])):
+        for i, (x, y) in enumerate(batch_iterator(train_X, train_Y)):
             inputs = Variable(torch.from_numpy(x))
             targets = Variable(torch.from_numpy(y))
             real_data_pred = disc_model(targets)
