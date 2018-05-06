@@ -91,7 +91,7 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
             if as_word and tokens.data[0] == self.decoder.alphabet.end_index:
                 break
         if as_word:
-            return ''.join(model.decoder.alphabet.index2letter(
+            return ''.join(self.decoder.alphabet.index2letter(
                 [x.data[0] for x in lst],
                 with_start_end=with_start_end)
             )
