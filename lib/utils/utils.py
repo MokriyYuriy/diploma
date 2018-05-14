@@ -19,15 +19,3 @@ def batch_iterator(X, Y=None, batch_size=32):
         else:
             yield X[ind[i:i + batch_size]]
 
-
-def load_pair_dataset(filename, alph1, alph2):
-    x, y = [], []
-    with open(filename, 'r') as ftr:
-        for line in ftr:
-            try:
-                word1, word2 = line.split()
-            except ValueError:
-                continue
-            x.append(alph1.letter2index(word1))
-            y.append(alph2.letter2index(word2))
-    return np.array(x), np.array(y)

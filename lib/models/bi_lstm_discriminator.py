@@ -21,6 +21,6 @@ class BiLSTMDiscriminator(nn.Module):
         out, _ = self.bilstm(embedding)
         forward_hs = out[range(out.size(0)), self.alph.get_length(input_sequence) - 1][:,:self.hidden_size]
         backward_hs = out[range(out.size(0)), [0] * (out.size(0))][:,self.hidden_size:]
-        return F.sigmoid(
+        return F.logsigmoid(
             self.output(torch.cat((forward_hs, backward_hs), dim=1))
         )

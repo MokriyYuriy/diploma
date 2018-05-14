@@ -43,6 +43,9 @@ class SimpleGRUDecoderWithAttention(nn.Module):
 
 
 class SimpleGRUSupervisedSeq2Seq(nn.Module):
+    GREEDY = 'greedy'
+    SAMPLING = 'sampling'
+
     def __init__(self, src_alphabet, dst_alphabet, embedding_size, hidden_size):
         super(SimpleGRUSupervisedSeq2Seq, self).__init__()
         self.encoder = SimpleGRUEncoder(src_alphabet, embedding_size, hidden_size)
@@ -67,13 +70,13 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
             logits.append(out)
         return F.log_softmax(torch.stack(logits, dim=1), dim=-1)
 
-    def translate(self, word, strategy='', max_length=30, with_start_end=True):
-        if isinstance(word, str):
+    def translate(self, words, strategy=GREEDY, return_logits=False, max_length=30, with_start_end=True):
+        if isinstance(words, str):
             as_word = True
-            input_sequence = Variable(torch.from_numpy(np.array([self.encoder.alphabet.letter2index(word)])))
-        elif isinstance(word, torch.autograd.variable.Variable):
+            input_sequence = Variable(torch.from_numpy(np.array([self.encoder.alphabet.letter2index(words)])))
+        elif isinstance(words, torch.autograd.variable.Variable):
             as_word = False
-            input_sequence = word
+            input_sequence = words
         else:
             assert False, "word argument must be str or numpy array"
 
@@ -83,9 +86,17 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
         tokens = self.start(input_sequence.size(0))
         # print(token.shape, hidden.shape)
         lst = [tokens]
+        logits = []
         for i in range(max_length - 1):
             out, hidden = self.decoder(tokens, hidden, enc_out, enc_mask)
-            tokens = out.max(1)[1]
+            if strategy == self.GREEDY:
+                tokens = out.max(1)[1]
+            elif strategy == self.SAMPLING:
+                tokens = torch.multinomial(F.log_softmax(out), 1)
+            else:
+                assert False, "provided value of strategy param is not appropriate"
+            if return_logits:
+                logits.append(F.log_softmax(out))
             # print(token, out)
             lst.append(tokens)
             if as_word and tokens.data[0] == self.decoder.alphabet.end_index:
@@ -96,4 +107,7 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
                 with_start_end=with_start_end)
             )
         else:
-            return torch.stack(lst).transpose(0, 1)
+            result_sequence = torch.stack(lst).transpose(0, 1)
+            if return_logits:
+                return result_sequence, torch.stack(logits).transpose(0, 1)
+            return result_sequence

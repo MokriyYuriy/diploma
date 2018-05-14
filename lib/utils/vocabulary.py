@@ -80,3 +80,9 @@ class Alphabet:
         onehot.scatter_(2, input_sequence.unsqueeze(2), 1.)
 
         return onehot
+
+    def get_mask_for_3D_array(self, input_sequence, input_array):
+        length_mask = self.get_mask(input_sequence)
+        input_sequence_mask = torch.zeros_like(input_array).scatter_(
+            2, input_sequence.view(*input_sequence.shape, 1), 1.0)
+        return input_sequence_mask * length_mask.view(*length_mask.shape, 1)

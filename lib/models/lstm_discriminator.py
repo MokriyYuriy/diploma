@@ -13,5 +13,5 @@ class LSTMDiscriminator(nn.Module):
     def forward(self, input_sequence):
         embedding = self.embedding(input_sequence)
         out, _ = self.lstm(embedding)
-        return F.sigmoid(
+        return F.logsigmoid(
             self.output(out[range(out.size(0)), self.alph.get_length(input_sequence) - 1].view(out.size(0), -1)))
