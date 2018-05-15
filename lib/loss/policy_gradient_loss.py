@@ -1,7 +1,7 @@
 import torch.nn.functional as F
 
 
-def policy_loss(disc_predictions, baseline_disc_prediciotns, logits, result_sequence, alphabet):
+def policy_loss(advantages, logits, result_sequence, alphabet, use_cuda=False):
     """
     Compute such function that its gradient is policy gradient.
 
@@ -12,7 +12,6 @@ def policy_loss(disc_predictions, baseline_disc_prediciotns, logits, result_sequ
     :return:
     """
 
-    mask = alphabet.get_mask_for_3D_array(result_sequence, logits)
+    mask = alphabet.get_mask_for_3D_array(result_sequence, logits, use_cuda=False)
     policy_term = (logits * mask).sum(axis=1).sum(axis=1)
-    advantages = F.logsigmoid(disc_predictions) - F.logsigmoid(baseline_disc_prediciotns)
-    return -(policy_term * advantages).mean()
+    return -(policy_term * advantages.detach()).mean()
