@@ -25,8 +25,7 @@ def train_discriminator(disc_model, gen_model, opt, train_X, train_Y, n_epochs=5
             #print(gen_data_pred)
             #print(real_data_pred)
             loss = disc_loss(real_data_pred, gen_data_pred)
-            cur_loss = 0.9 * cur_loss + 0.1 * loss.data[0]
-            update_history(history, dict(disc_loss=(loss.data[0], cur_loss)))
+            update_history(history, dict(disc_loss=loss.data[0]))
             loss.backward()
             opt.step()
             opt.zero_grad()
