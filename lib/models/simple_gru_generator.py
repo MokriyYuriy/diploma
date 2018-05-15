@@ -54,7 +54,7 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
         super(SimpleGRUSupervisedSeq2Seq, self).__init__()
         self.encoder = SimpleGRUEncoder(src_alphabet, embedding_size, hidden_size)
         self.h_linear = nn.Linear(hidden_size, hidden_size)
-        self.decoder = SimpleGRUDecoderWithAttention(dst_alphabet, embedding_size, hidden_size)
+        self.decoder = SimpleGRUDecoderWithAttention(dst_alphabet, embedding_size, hidden_size, use_cuda)
         self.use_cuda = use_cuda
 
     def start(self, batch_size):
