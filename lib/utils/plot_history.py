@@ -11,8 +11,8 @@ def plot_history(history):
     for i, (key, values) in enumerate(history.items()):
         plt.subplot(rows, 2, i + 1)
         plt.title(key)
-        plt.plot(values[0], label="values")
-        plt.plot(values[1], label="smoothed values")
+        plt.plot([x[0] for x in values], label="values")
+        plt.plot([x[1] for x in values], label="smoothed values")
         plt.legend()
     plt.show()
 
