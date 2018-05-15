@@ -12,7 +12,7 @@ def plot_history(history):
     for i, (key, values) in enumerate(history.items()):
         plt.subplot(rows, 2, i + 1)
         plt.title(key)
-        plt.plot([x[0] for x in values], label="values")
+        plt.plot(values, label="values")
         plt.plot([np.mean(values[i:i+30]) for i in range(len(values) - 30)], label="smoothed values")
         plt.legend()
     plt.show()
