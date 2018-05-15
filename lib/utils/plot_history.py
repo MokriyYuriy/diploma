@@ -17,7 +17,7 @@ def plot_history(history):
     plt.show()
 
 def update_history(history, new_values):
-    for key, value in new_values:
+    for key, value in new_values.items():
         history[key].append(value)
 
 def build_history(metrics_names):

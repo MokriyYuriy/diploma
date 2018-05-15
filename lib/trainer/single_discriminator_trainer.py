@@ -33,6 +33,6 @@ def train_discriminator(disc_model, gen_model, opt, train_X, train_Y, n_epochs=5
             opt.step()
             opt.zero_grad()
             if i % update_plot_freq + 1 == update_plot_freq:
-                print(loss.data[0])
+                plot_history(history)
             #break
         print(cur_loss)
