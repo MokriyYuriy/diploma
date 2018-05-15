@@ -9,7 +9,7 @@ from ..loss import cross_entropy
 from ..metrics import compute_bleu_score
 
 def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg_words,
-    checkpoints_folder, metrics_compute_freq=50, n_epochs=7):
+    checkpoints_folder, metrics_compute_freq=50, n_epochs=7, use_cuda=False):
 
     cur_loss = 0
     for epoch in range(n_epochs):
@@ -18,9 +18,12 @@ def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg
         for i, (x, y) in enumerate(batch_iterator(train_X, train_Y)):
             inputs = Variable(torch.from_numpy(x))
             targets = Variable(torch.from_numpy(y))
+            if use_cuda:
+                inputs = inputs.cuda()
+                targets = targets.cuda()
             log_predictions = model(inputs, targets)
             # print(x)
-            loss = cross_entropy(log_predictions, targets[:, 1:].contiguous(), alph_Y)
+            loss = cross_entropy(log_predictions, targets[:, 1:].contiguous(), alph_Y, use_cuda)
             # print(loss.data, log_predictions.data.min())
             loss.backward()
             cur_loss = 0.9 * cur_loss + 0.1 * loss.data[0]

@@ -21,7 +21,7 @@ class SimpleGRUEncoder(nn.Module):
 
 
 class SimpleGRUDecoderWithAttention(nn.Module):
-    def __init__(self, alphabet, embedding_size, hidden_size):
+    def __init__(self, alphabet, embedding_size, hidden_size, use_cuda=False):
         super(SimpleGRUDecoderWithAttention, self).__init__()
         self.hidden_size = hidden_size
         self.alphabet = alphabet
@@ -29,9 +29,13 @@ class SimpleGRUDecoderWithAttention(nn.Module):
         self.gru_cell = nn.GRUCell(input_size=embedding_size + hidden_size, hidden_size=hidden_size)
         self.logit_linear = nn.Linear(hidden_size, len(alphabet))
         self.attention = MultiplicativeAttentionWithMask(hidden_size, embedding_size)
+        self.use_cuda = use_cuda
 
     def init_hidden(self, batch_size):
-        return Variable(torch.zeros(batch_size, self.hidden_size))
+        if self.use_cuda:
+            return Variable(torch.cuda.FloatTensor(batch_size, self.hidden_size).fill_(0))
+        else:
+            return Variable(torch.zeros((batch_size, self.hidden_size)))
 
     def forward(self, token, prev_h, encoder_hs, encoder_mask):
         embedding = self.embedding(token)
@@ -46,14 +50,18 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
     GREEDY = 'greedy'
     SAMPLING = 'sampling'
 
-    def __init__(self, src_alphabet, dst_alphabet, embedding_size, hidden_size):
+    def __init__(self, src_alphabet, dst_alphabet, embedding_size, hidden_size, use_cuda=False):
         super(SimpleGRUSupervisedSeq2Seq, self).__init__()
         self.encoder = SimpleGRUEncoder(src_alphabet, embedding_size, hidden_size)
         self.h_linear = nn.Linear(hidden_size, hidden_size)
         self.decoder = SimpleGRUDecoderWithAttention(dst_alphabet, embedding_size, hidden_size)
+        self.use_cuda = use_cuda
 
     def start(self, batch_size):
-        return Variable(torch.from_numpy(np.repeat(self.decoder.alphabet.start_index, batch_size)))
+        if self.use_cuda:
+            return Variable(torch.cuda.LongTensor(batch_size).fill_(self.decoder.alphabet.start_index))
+        else:
+            return Variable(torch.LongTensor(batch_size).fill_(self.decoder.alphabet.start_index))
 
     '''
     def middle_layer(self, out, mask):
@@ -73,7 +81,10 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
     def translate(self, words, strategy=GREEDY, return_logits=False, max_length=30, with_start_end=True):
         if isinstance(words, str):
             as_word = True
-            input_sequence = Variable(torch.from_numpy(np.array([self.encoder.alphabet.letter2index(words)])))
+            input_sequence = torch.from_numpy(np.array([self.encoder.alphabet.letter2index(words)]))
+            if self.use_cuda:
+                input_sequence = input_sequence.cuda()
+            input_sequence = Variable(input_sequence)
         elif isinstance(words, torch.autograd.variable.Variable):
             as_word = False
             input_sequence = words

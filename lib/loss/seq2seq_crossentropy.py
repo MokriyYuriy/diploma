@@ -1,6 +1,6 @@
 import torch
 
-def cross_entropy(log_predictions, targets, alphabet):
+def cross_entropy(log_predictions, targets, alphabet, use_cuda=False):
     """ Cross entropy loss for sequences
     Parameters
     ---------
@@ -12,6 +12,6 @@ def cross_entropy(log_predictions, targets, alphabet):
         Alphabet object
 
     """
-    mask = alphabet.get_mask_for_3D_array(log_predictions, targets)
+    mask = alphabet.get_mask_for_3D_array(targets, log_predictions, use_cuda)
     # print(mask.sum(1, keepdim=True).sum(2, keepdim=True))
     return (log_predictions * mask / (mask.sum(2, keepdim=True).sum(1, keepdim=True) * -log_predictions.size(0))).sum()
