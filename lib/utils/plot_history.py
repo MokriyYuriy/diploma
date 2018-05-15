@@ -8,11 +8,11 @@ def plot_history(history):
     clear_output()
     rows = (len(history) + 1) // 2
     plt.figure(figsize=(4 * rows, 8))
-    for i, (key, (values, smoothed_values)) in enumerate(history.items()):
+    for i, (key, values) in enumerate(history.items()):
         plt.subplot(rows, 2, i + 1)
         plt.title(key)
-        plt.plot(values, label="values")
-        plt.plot(smoothed_values, label="smoothed values")
+        plt.plot(values[0], label="values")
+        plt.plot(values[1], label="smoothed values")
         plt.legend()
     plt.show()
 
