@@ -1,4 +1,5 @@
 import torch as torch
+from torch.autograd import Variable
 
 
 class Alphabet:
@@ -83,6 +84,6 @@ class Alphabet:
 
     def get_mask_for_3D_array(self, input_sequence, input_array, use_cuda=False):
         length_mask = self.get_mask(input_sequence)
-        input_sequence_mask = (torch.cuda if use_cuda else torch).FloatTensor(*input_array.shape).fill_(0).scatter_(
+        input_sequence_mask = Variable((torch.cuda if use_cuda else torch).FloatTensor(*input_array.shape).fill_(0)).scatter_(
             2, input_sequence.view(*input_sequence.shape, 1), 1.0)
         return input_sequence_mask * length_mask.view(*length_mask.shape, 1)
