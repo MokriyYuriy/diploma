@@ -37,7 +37,7 @@ class CycleGAN(nn.Module):
             src_gan, trg_gan = self.src_gan, self.trg_gan
         disc_predictions, result_sequence, logits = src_gan.src_forward(input_sequence)
         baseline_disc_predictions = src_gan.baseline_forward(input_sequence)
-        reversed_logits = trg_gan.gen_model(result_sequence)
+        reversed_logits = trg_gan.gen_model(result_sequence, input_sequence[:, 1:].contiguous())
         return disc_predictions, result_sequence, logits, baseline_disc_predictions, reversed_logits
 
     def disc_forward(self, output_sequence, reversed=False):
