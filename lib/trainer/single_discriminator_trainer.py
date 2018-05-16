@@ -7,8 +7,7 @@ from ..loss import disc_loss
 
 
 def train_discriminator(disc_model, gen_model, opt, train_X, train_Y, n_epochs=50, update_plot_freq=50, use_cuda=False):
-    cur_loss = 0
-    history = build_history(["disc_loss"])
+    history = build_history([("disc_loss", dict())])
     for epoch in range(n_epochs):
         disc_model.train()
         gen_model.eval()
@@ -32,4 +31,4 @@ def train_discriminator(disc_model, gen_model, opt, train_X, train_Y, n_epochs=5
             if i % update_plot_freq + 1 == update_plot_freq:
                 plot_history(history)
             #break
-        print(cur_loss)
+    return history

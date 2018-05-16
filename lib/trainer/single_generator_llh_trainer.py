@@ -4,14 +4,16 @@ import os
 import torch
 from torch.autograd import Variable
 
-from ..utils import batch_iterator
+from ..utils import batch_iterator, build_history, update_history, plot_history
 from ..loss import cross_entropy
 from ..metrics import compute_bleu_score
 
 def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg_words,
     checkpoints_folder, metrics_compute_freq=50, n_epochs=7, use_cuda=False):
-
-    cur_loss = 0
+    history = build_history([
+        ("cross_entropy", dict(smoothed=True, xlabel="iterations")),
+        ("BLEU score", dict(smoothed=False, xlabel="epochs"))
+    ])
     for epoch in range(n_epochs):
         model.train()
         start_time = time.time()
