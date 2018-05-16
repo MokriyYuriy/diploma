@@ -4,13 +4,13 @@ import os
 import torch
 from torch.autograd import Variable
 
-from ..utils import batch_iterator, build_history, update_history, plot_history
+from ..utils import batch_iterator, build_history, update_history, plot_history, inplace_clip_gradient
 from ..loss import cross_entropy
 from ..metrics import compute_corpus_bleu_score
 
 
 def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg_words,
-    checkpoints_folder, metrics_compute_freq=50, n_epochs=7, use_cuda=False):
+    checkpoints_folder, metrics_compute_freq=50, n_epochs=7, clipping=1.0, use_cuda=False):
     history = build_history([
         ("cross_entropy", dict(smoothed=True, xlabel="iterations")),
         ("bleu", dict(smoothed=False, xlabel="epochs"))
@@ -32,6 +32,7 @@ def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg
             # print(loss.data, log_predictions.data.min())
             loss.backward()
             update_history(history, dict(cross_entropy=loss.data[0]))
+            inplace_clip_gradient(model, clipping)
             opt.step()
             opt.zero_grad()
             if i % metrics_compute_freq + 1 == metrics_compute_freq:

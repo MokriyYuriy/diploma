@@ -24,3 +24,8 @@ def batch_iterator(X, Y=None, batch_size=32, synchronize=True, length=None):
         else:
             yield X[indx[i:i + batch_size]]
 
+def inplace_clip_gradient(model, max_norm=1.0):
+    for param in model.parameters():
+        if param.grad is None:
+            continue
+        param.grad.data = param.grad.data.clamp(-max_norm, max_norm)
