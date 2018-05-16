@@ -42,9 +42,9 @@ class CycleGAN(nn.Module):
 
     def disc_forward(self, output_sequence, reversed=False):
         if reversed:
-            return self.trg_gan.trg_forward(output_sequence)
-        else:
             return self.src_gan.trg_forward(output_sequence)
+        else:
+            return self.trg_gan.trg_forward(output_sequence)
 
     def compute_losses(self, input_sequence, reversed=False):
         if reversed:
@@ -56,7 +56,7 @@ class CycleGAN(nn.Module):
         src_alphabet = src_gan.gen_model.encoder.alphabet
         trg_alphabet = trg_gan.gen_model.encoder.alphabet
         rev_true_disc_loss, fwd_fake_disc_loss = disc_cross_entropy(
-            self.disc_forward(input_sequence), baseline_disc_predictions, sep_return=True
+            self.disc_forward(input_sequence, reversed), disc_predictions, sep_return=True
         )
         cycle_cross_entropy = cross_entropy(
             src_gan.trg_gan.gen_model(result_sequence.detach()),
