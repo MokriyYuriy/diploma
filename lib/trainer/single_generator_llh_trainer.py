@@ -12,8 +12,10 @@ def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg
     checkpoints_folder, metrics_compute_freq=50, n_epochs=7, use_cuda=False):
     history = build_history([
         ("cross_entropy", dict(smoothed=True, xlabel="iterations")),
-        ("BLEU score", dict(smoothed=False, xlabel="epochs"))
+        ("bleu", dict(smoothed=False, xlabel="epochs"))
     ])
+    previous_epoch_bleu = None
+    previous_epoch_time = None
     for epoch in range(n_epochs):
         model.train()
         start_time = time.time()
@@ -29,13 +31,17 @@ def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg
             # print(loss.data, log_predictions.data.min())
             loss.backward()
             cur_loss = 0.9 * cur_loss + 0.1 * loss.data[0]
+            update_history(history, dict(cross_entropy=loss.data[0]))
             opt.step()
             opt.zero_grad()
-            if (i + 1) % metrics_compute_freq == 0:
-                print("epoch: {} iter: {} loss: {}".format(epoch, i, cur_loss))
+            if i % metrics_compute_freq + 1 == metrics_compute_freq:
+                print("epoch: {} iter: {} loss: {} prev_epoch_bleu: {} prev_epoch_time"
+                      .format(epoch, i, cur_loss, previous_epoch_bleu, previous_epoch_time))
+                plot_history(history)
+
         model.eval()
-        val_score = compute_bleu_score(model, val_src_words, val_trg_words)
-        print("epoch: {} val_score: {} time: {}"
-              .format(epoch, val_score, time.time() - start_time))
+        previous_epoch_bleu = compute_bleu_score(model, val_src_words, val_trg_words)
+        update_history(history, dict(bleu=previous_epoch_bleu))
+        previous_epoch_time = time.time() - start_time
         torch.save(model.state_dict(),
-                   os.path.join(checkpoints_folder, "state_dict_{}_{}.pth".format(epoch, val_score)))
+                   os.path.join(checkpoints_folder, "state_dict_{}_{}.pth".format(epoch, previous_epoch_bleu)))
