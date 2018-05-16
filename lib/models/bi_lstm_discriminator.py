@@ -16,7 +16,7 @@ class BiLSTMDiscriminator(nn.Module):
         self.output = nn.Linear(2 * hidden_size, 1)
 
     def reverse_sequence(self, input_sequence, mask):
-        idx = torch.cumsum(mask, dim=1)
+        idx = torch.cumsum(mask, dim=1).long()
         idx = idx.max(1, keepdim=True)[0] - idx
         return torch.gather(input_sequence, 1, idx).detach()
 
