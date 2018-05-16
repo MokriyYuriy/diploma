@@ -20,6 +20,8 @@ def train_cycle_gan(
         ('trg_bleu_score', dict(xlabel="epochs", smoothed=False)),
         ('src_disc_advantage', dict()),
         ('trg_disc_advantage', dict()),
+        ('src_disc_loss', dict()),
+        ('trg_disc_loss', dict()),
         ('src_cycle_loss', dict()),
         ('trg_cycle_loss', dict()),
         ('src_entropy', dict()),
@@ -45,10 +47,14 @@ def train_cycle_gan(
                 paired_x = paired_x.cuda()
                 paired_y = paired_y.cuda()
 
-            x_pg_disc_loss, x_pg_cycle_loss, x_disc_loss, x_cycle_ce, x_pg_entropy, x_advantages \
+            x_pg_disc_loss, x_pg_cycle_loss, y_true_disc_loss, x_fake_disc_loss, x_cycle_ce, x_pg_entropy, x_advantages \
                 = model.compute_losses(single_x, reversed=False)
-            y_pg_disc_loss, y_pg_cycle_loss, y_disc_loss, y_cycle_ce, y_pg_entropy, y_advantages \
+            y_pg_disc_loss, y_pg_cycle_loss, x_true_disc_loss, y_fake_disc_loss, y_cycle_ce, y_pg_entropy, y_advantages \
                 = model.compute_losses(single_y, reversed=True)
+
+            x_disc_loss = x_fake_disc_loss + x_true_disc_loss
+            y_disc_loss = y_fake_disc_loss + y_true_disc_loss
+
             x_sv_log_pred = model.src_gan.gen_model(paired_x)
             y_sv_log_pred = model.trg_gan.gen_model(paired_y)
 
@@ -60,6 +66,8 @@ def train_cycle_gan(
                 trg_supervised_ce=y_sv_loss.data[0],
                 src_disc_advantage=x_advantages['disc_advantage'],
                 trg_disc_advantage=y_advantages['disc_advantage'],
+                src_disc_loss=x_disc_loss.data[0],
+                trg_disc_loss=y_disc_loss.data[1],
                 src_cycle_loss=x_cycle_ce.data[0],
                 trg_cycle_loss=y_cycle_ce.data[0],
                 src_entropy=x_advantages['entropy'],

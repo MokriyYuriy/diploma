@@ -55,7 +55,9 @@ class CycleGAN(nn.Module):
             = self.forward(input_sequence, reversed)
         src_alphabet = src_gan.gen_model.encoder.alphabet
         trg_alphabet = trg_gan.gen_model.encoder.alphabet
-        disc_loss = disc_cross_entropy(self.disc_forward(input_sequence), baseline_disc_predictions)
+        rev_true_disc_loss, fwd_fake_disc_loss = disc_cross_entropy(
+            self.disc_forward(input_sequence), baseline_disc_predictions, sep_return=True
+        )
         cycle_cross_entropy = cross_entropy(
             src_gan.trg_gan.gen_model(result_sequence.detach()),
             input_sequence,
@@ -75,7 +77,7 @@ class CycleGAN(nn.Module):
             entropy=entropy.mean().data[0]
         )
 
-        return pg_discr_loss, pg_cycle_loss, disc_loss, cycle_cross_entropy.mean(), pg_entropy, advantages
+        return pg_discr_loss, pg_cycle_loss, rev_true_disc_loss, fwd_fake_disc_loss, cycle_cross_entropy.mean(), pg_entropy, advantages
 
 
 
