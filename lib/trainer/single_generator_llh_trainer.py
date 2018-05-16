@@ -30,13 +30,12 @@ def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg
             loss = cross_entropy(log_predictions, targets[:, 1:].contiguous(), alph_Y, use_cuda=use_cuda)
             # print(loss.data, log_predictions.data.min())
             loss.backward()
-            cur_loss = 0.9 * cur_loss + 0.1 * loss.data[0]
             update_history(history, dict(cross_entropy=loss.data[0]))
             opt.step()
             opt.zero_grad()
             if i % metrics_compute_freq + 1 == metrics_compute_freq:
-                print("epoch: {} iter: {} loss: {} prev_epoch_bleu: {} prev_epoch_time"
-                      .format(epoch, i, cur_loss, previous_epoch_bleu, previous_epoch_time))
+                print("epoch: {} iter: {} prev_epoch_bleu: {} prev_epoch_time"
+                      .format(epoch, i, previous_epoch_bleu, previous_epoch_time))
                 plot_history(history)
 
         model.eval()
