@@ -60,7 +60,7 @@ class CycleGAN(nn.Module):
         )
         cycle_cross_entropy = cross_entropy(
             trg_gan.gen_model(result_sequence.detach(), input_sequence),
-            input_sequence[:, 1:].contiguos(),
+            input_sequence[:, 1:].contiguous(),
             src_alphabet,
             reduce_mean=False
         )
