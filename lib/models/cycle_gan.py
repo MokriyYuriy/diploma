@@ -59,8 +59,8 @@ class CycleGAN(nn.Module):
             self.disc_forward(input_sequence, reversed), disc_predictions, sep_return=True
         )
         cycle_cross_entropy = cross_entropy(
-            src_gan.trg_gan.gen_model(result_sequence.detach()),
-            input_sequence,
+            trg_gan.gen_model(result_sequence.detach(), input_sequence),
+            input_sequence[:, 1:].contiguos(),
             src_alphabet,
             reduce_mean=False
         )
