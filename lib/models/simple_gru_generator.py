@@ -1,3 +1,5 @@
+from enum import Enum
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -47,8 +49,17 @@ class SimpleGRUDecoderWithAttention(nn.Module):
 
 
 class SimpleGRUSupervisedSeq2Seq(nn.Module):
+    #sampling modes
     GREEDY = 'greedy'
     SAMPLING = 'sampling'
+
+    #translation input modes
+    class InputMode(Enum):
+        ONE_WORD = 0
+        MANY_WORDS = 1
+        VARIABLE = 2
+
+
 
     def __init__(self, src_alphabet, dst_alphabet, embedding_size, hidden_size, use_cuda=False):
         super(SimpleGRUSupervisedSeq2Seq, self).__init__()
@@ -92,23 +103,30 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
 
     def translate(self, words, strategy=GREEDY, return_logits=False, max_length=30, with_start_end=True):
         if isinstance(words, str):
-            as_word = True
-            input_sequence = torch.from_numpy(np.array([self.encoder.alphabet.letter2index(words)]))
+            mode = self.InputMode.ONE_WORD
+            input_sequence = Variable(torch.from_numpy(np.array([self.encoder.alphabet.letter2index(words)])))
             if self.use_cuda:
                 input_sequence = input_sequence.cuda()
-            input_sequence = Variable(input_sequence)
+        elif isinstance(words, list):
+            mode = self.InputMode.MANY_WORDS
+            input_sequence = Variable(
+                torch.from_numpy(np.array([self.encoder.alphabet.letter2index(word) for word in words]))
+            )
+            if self.use_cuda:
+                input_sequence = input_sequence.cuda()
         elif isinstance(words, torch.autograd.variable.Variable):
-            as_word = False
+            mode = self.InputMode.VARIABLE
             input_sequence = words
         else:
             assert False, "word argument must be str or numpy array"
 
         # print(input_sequence.shape)
         enc_out, enc_mask = self.encoder(input_sequence)
-        hidden = self.decoder.init_hidden(input_sequence.size(0))
-        tokens = self.start(input_sequence.size(0))
-        end = self.end(input_sequence.size(0))
-        end_mask = self.end_mask(input_sequence.size(0))
+        batch_size = input_sequence.size(0)
+        hidden = self.decoder.init_hidden(batch_size)
+        tokens = self.start(batch_size)
+        end = self.end(batch_size)
+        end_mask = self.end_mask(batch_size)
         # print(token.shape, hidden.shape)
         lst = [tokens]
         logits = []
@@ -126,13 +144,18 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
             end_mask |= (tokens == end)
             tokens = tokens.masked_scatter_(end_mask, end)
             lst.append(tokens)
-            if as_word and tokens.data[0] == self.decoder.alphabet.end_index:
+            if mode is self.InputMode.ONE_WORD and tokens.data[0] == self.decoder.alphabet.end_index:
                 break
-        if as_word:
+        if mode is self.InputMode.ONE_WORD:
             return ''.join(self.decoder.alphabet.index2letter(
                 [x.data[0] for x in lst],
                 with_start_end=with_start_end)
             )
+        elif mode is self.InputMode.MANY_WORDS:
+            return [''.join(self.decoder.alphabet.index2letter(
+                [x.data[i] for x in lst],
+                with_start_end=with_start_end)
+            ) for i in range(batch_size)]
         else:
             result_sequence = torch.stack(lst).transpose(0, 1)
             if return_logits:

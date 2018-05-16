@@ -4,7 +4,15 @@ import numpy as np
 #from tqdm import tqdm_notebook
 
 
-def compute_bleu_score(model, src_words, trg_words):
+def compute_corpus_bleu_score(model, src_words, trg_words, batch_size=32):
+    translations = []
+    for i in range(0, len(src_words), batch_size):
+        translations.extend(model.translate(src_words[i:i+batch_size], with_start_end=False))
+    translations = [[list(translation)] for translation in translations]
+    ground_truth = [list(word) for word in trg_words]
+    return bl.corpus_bleu(translations, ground_truth)
+
+def compute_sentence_bleu_score(model, src_words, trg_words):
     return _compute_metric_average(model, src_words, trg_words, lambda x, y: bl.sentence_bleu([list(x)], list(y)))
 
 def compute_editdistance(model, src_words, trg_words):

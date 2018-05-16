@@ -6,7 +6,8 @@ from torch.autograd import Variable
 
 from ..utils import batch_iterator, build_history, update_history, plot_history
 from ..loss import cross_entropy
-from ..metrics import compute_bleu_score
+from ..metrics import compute_corpus_bleu_score
+
 
 def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg_words,
     checkpoints_folder, metrics_compute_freq=50, n_epochs=7, use_cuda=False):
@@ -39,7 +40,7 @@ def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg
                 plot_history(history)
 
         model.eval()
-        previous_epoch_bleu = compute_bleu_score(model, val_src_words, val_trg_words)
+        previous_epoch_bleu = compute_corpus_bleu_score(model, val_src_words, val_trg_words)
         update_history(history, dict(bleu=previous_epoch_bleu))
         previous_epoch_time = time.time() - start_time
         torch.save(model.state_dict(),
