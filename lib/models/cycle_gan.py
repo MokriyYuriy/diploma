@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..loss import policy_loss, disc_loss, cross_entropy
+from ..loss import policy_loss, disc_cross_entropy, cross_entropy
 
 
 class GAN(nn.Module):
@@ -11,7 +11,7 @@ class GAN(nn.Module):
         self.disc_model = disc_model
 
     def baseline_forward(self, input_sequence):
-        baseline_sequence = self.gen_model.translate(input_sequence, strategy='greedy', return_logits=True)[1]
+        baseline_sequence = self.gen_model.translate(input_sequence, strategy='greedy')
         return self.disc_model(baseline_sequence.detach())
 
     def src_forward(self, input_sequence):
@@ -55,20 +55,27 @@ class CycleGAN(nn.Module):
             = self.forward(input_sequence, reversed)
         src_alphabet = src_gan.gen_model.encoder.alphabet
         trg_alphabet = trg_gan.gen_model.encoder.alphabet
-        disc_cross_entropy = disc_loss(self.disc_forward(input_sequence), baseline_disc_predictions)
+        disc_loss = disc_cross_entropy(self.disc_forward(input_sequence), baseline_disc_predictions)
         cycle_cross_entropy = cross_entropy(
             src_gan.trg_gan.gen_model(result_sequence.detach()),
             input_sequence,
             src_alphabet,
-            reduce_mean=False,
-            use_cuda=self.use_cuda
+            reduce_mean=False
         )
         forward_advantages = F.logsigmoid(disc_predictions) - F.logsigmoid(baseline_disc_predictions)
-        cycle_advantages = cycle_cross_entropy.mean()
-        pg_discr_loss = policy_loss(forward_advantages, logits, trg_alphabet)
-        pg_cycle_loss = policy_loss(cycle_advantages, logits, trg_alphabet)
+        normalized_logits = F.log_softmax(logits)
+        pg_discr_loss = policy_loss(forward_advantages, normalized_logits, trg_alphabet)
+        pg_cycle_loss = policy_loss(cycle_cross_entropy, normalized_logits, trg_alphabet)
+        entropy = (F.softmax(logits) * normalized_logits).sum(1).sum(1)
+        pg_entropy = policy_loss(entropy, normalized_logits, trg_alphabet)
 
-        return pg_discr_loss, pg_cycle_loss, disc_cross_entropy, cycle_cross_entropy.mean()
+        advantages = dict(
+            disc_advantage=forward_advantages.mean().data[0],
+            cycle_advantage=cycle_cross_entropy.mean().data[0],
+            entropy=entropy.mean().data[0]
+        )
+
+        return pg_discr_loss, pg_cycle_loss, disc_loss, cycle_cross_entropy.mean(), pg_entropy, advantages
 
 
 

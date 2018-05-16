@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 from ..utils import batch_iterator, build_history, update_history, plot_history, inplace_clip_gradient
-from ..loss import disc_loss
+from ..loss import disc_cross_entropy
 
 
 def train_discriminator(disc_model, gen_model, opt, train_X, train_Y, n_epochs=50, update_plot_freq=50, clipping=1.0, use_cuda=False):
@@ -23,7 +23,7 @@ def train_discriminator(disc_model, gen_model, opt, train_X, train_Y, n_epochs=5
             #print(targets, gen_model.translate(inputs), real_data_pred, gen_data_pred)
             #print(gen_data_pred)
             #print(real_data_pred)
-            loss = disc_loss(real_data_pred, gen_data_pred)
+            loss = disc_cross_entropy(real_data_pred, gen_data_pred)
             update_history(history, dict(disc_loss=loss.data[0]))
             loss.backward()
             inplace_clip_gradient(disc_model, clipping)
