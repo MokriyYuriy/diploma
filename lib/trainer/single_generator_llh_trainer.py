@@ -27,7 +27,7 @@ def train_generator(model, opt, alph_Y, train_X, train_Y, val_src_words, val_trg
                 targets = targets.cuda()
             log_predictions = model(inputs, targets)
             # print(x)
-            loss = cross_entropy(log_predictions, targets[:, 1:].contiguous(), alph_Y, use_cuda=use_cuda)
+            loss = cross_entropy(log_predictions, targets[:, 1:].contiguous(), alph_Y)
             # print(loss.data, log_predictions.data.min())
             loss.backward()
             update_history(history, dict(cross_entropy=loss.data[0]))
