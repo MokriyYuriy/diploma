@@ -63,6 +63,18 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
         else:
             return Variable(torch.LongTensor(batch_size).fill_(self.decoder.alphabet.start_index))
 
+    def end(self, batch_size):
+        if self.use_cuda:
+            return Variable(torch.cuda.LongTensor(batch_size).fill_(self.decoder.alphabet.end_index))
+        else:
+            return Variable(torch.LongTensor(batch_size).fill_(self.decoder.alphabet.end_index))
+
+    def end_mask(self, batch_size):
+        if self.use_cuda:
+            return Variable(torch.cuda.ByteTensor(batch_size).fill_(0))
+        else:
+            return Variable(torch.ByteTensor(batch_size).fill_(0))
+
     '''
     def middle_layer(self, out, mask):
         #print(mask.sum(1))
@@ -95,6 +107,8 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
         enc_out, enc_mask = self.encoder(input_sequence)
         hidden = self.decoder.init_hidden(input_sequence.size(0))
         tokens = self.start(input_sequence.size(0))
+        end = self.end(input_sequence.size(0))
+        end_mask = self.end_mask(input_sequence.size(0))
         # print(token.shape, hidden.shape)
         lst = [tokens]
         logits = []
@@ -109,6 +123,8 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
             if return_logits:
                 logits.append(F.log_softmax(out))
             # print(token, out)
+            end_mask |= (tokens == end)
+            tokens = tokens.masked_scatter_(end_mask, end)
             lst.append(tokens)
             if as_word and tokens.data[0] == self.decoder.alphabet.end_index:
                 break
