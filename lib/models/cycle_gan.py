@@ -75,8 +75,8 @@ class CycleGAN(nn.Module):
         normalized_logits = F.log_softmax(logits, dim=2)
         pg_discr_loss = policy_loss(forward_advantages, normalized_logits, mask)
         pg_cycle_loss = policy_loss(cycle_cross_entropy, normalized_logits, mask)
-        entropy = (F.softmax(logits) * normalized_logits * mask).sum(1).sum(1)
-        pg_entropy = policy_loss(entropy, normalized_logits, mask)
+        entropy = -(F.softmax(logits) * normalized_logits * mask).sum(1).sum(1)
+        pg_entropy = policy_loss(-entropy, normalized_logits, mask)
 
         advantages = dict(
             disc_advantage=forward_advantages.mean().data[0],
@@ -85,6 +85,4 @@ class CycleGAN(nn.Module):
         )
 
         return pg_discr_loss, pg_cycle_loss, rev_true_disc_loss, fwd_fake_disc_loss, cycle_cross_entropy.mean(), pg_entropy, advantages
-
-
 
