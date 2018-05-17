@@ -70,6 +70,7 @@ class CycleGAN(nn.Module):
 
         forward_advantages = F.logsigmoid(disc_predictions) - F.logsigmoid(baseline_disc_predictions)
 
+        logits = logits.contiguous()
         normalized_logits = F.log_softmax(logits)
         pg_discr_loss = policy_loss(forward_advantages, normalized_logits, result_sequence, trg_alphabet)
         pg_cycle_loss = policy_loss(cycle_cross_entropy, normalized_logits, result_sequence, trg_alphabet)
