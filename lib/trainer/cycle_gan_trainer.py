@@ -30,6 +30,13 @@ def train_cycle_gan(
         ('trg_entropy', dict()),
     ])
 
+    src_epoch_bleu = compute_corpus_bleu_score(model.src_gan.gen_model, val_src_words, val_trg_words)
+    trg_epoch_bleu = compute_corpus_bleu_score(model.trg_gan.gen_model, val_trg_words, val_src_words)
+    update_history(history, dict(
+        src_bleu_score=src_epoch_bleu,
+        trg_bleu_score=trg_epoch_bleu
+    ))
+
 
     for epoch in range(n_epochs):
         model.train()
@@ -109,7 +116,7 @@ def train_cycle_gan(
 
             if i % update_plot_freq + 1 == update_plot_freq:
                 plot_history(history)
-                
+
         model.eval()
         src_epoch_bleu = compute_corpus_bleu_score(model.src_gan.gen_model, val_src_words, val_trg_words)
         trg_epoch_bleu = compute_corpus_bleu_score(model.trg_gan.gen_model, val_trg_words, val_src_words)
