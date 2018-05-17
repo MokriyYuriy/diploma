@@ -51,24 +51,30 @@ class CycleGAN(nn.Module):
             src_gan, trg_gan = self.trg_gan, self.src_gan
         else:
             src_gan, trg_gan = self.src_gan, self.trg_gan
+
         disc_predictions, result_sequence, logits, baseline_disc_predictions, reversed_logits \
             = self.forward(input_sequence, reversed)
         src_alphabet = src_gan.gen_model.encoder.alphabet
         trg_alphabet = trg_gan.gen_model.encoder.alphabet
+
         rev_true_disc_loss, fwd_fake_disc_loss = disc_cross_entropy(
             self.disc_forward(input_sequence, reversed), disc_predictions, sep_return=True
         )
+
         cycle_cross_entropy = cross_entropy(
             trg_gan.gen_model(result_sequence.detach(), input_sequence),
             input_sequence[:, 1:].contiguous(),
             src_alphabet,
             reduce_mean=False
         )
+
         forward_advantages = F.logsigmoid(disc_predictions) - F.logsigmoid(baseline_disc_predictions)
+
         normalized_logits = F.log_softmax(logits)
-        pg_discr_loss = policy_loss(forward_advantages, normalized_logits, trg_alphabet)
-        pg_cycle_loss = policy_loss(cycle_cross_entropy, normalized_logits, trg_alphabet)
-        entropy = (F.softmax(logits) * normalized_logits).sum(1).sum(1)
+        pg_discr_loss = policy_loss(forward_advantages, normalized_logits, result_sequence, trg_alphabet)
+        pg_cycle_loss = policy_loss(cycle_cross_entropy, normalized_logits, result_sequence, trg_alphabet)
+        mask = trg_alphabet.get_mask_for_3D_array(result_sequence)
+        entropy = (F.softmax(logits) * normalized_logits * mask).sum(1).sum(1)
         pg_entropy = policy_loss(entropy, normalized_logits, trg_alphabet)
 
         advantages = dict(
