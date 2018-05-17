@@ -30,6 +30,7 @@ def train_cycle_gan(
         ('trg_entropy', dict()),
     ])
 
+    model.eval()
     src_epoch_bleu = compute_corpus_bleu_score(model.src_gan.gen_model, val_src_words, val_trg_words)
     trg_epoch_bleu = compute_corpus_bleu_score(model.trg_gan.gen_model, val_trg_words, val_src_words)
     update_history(history, dict(
@@ -124,6 +125,7 @@ def train_cycle_gan(
             src_bleu_score=src_epoch_bleu,
             trg_bleu_score=trg_epoch_bleu
         ))
+
         plot_history(history)
         torch.save(model.state_dict(),
                    os.path.join(checkpoints_folder, "state_dict_{}_{}_{}.pth".format(

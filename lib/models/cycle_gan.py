@@ -82,7 +82,7 @@ class CycleGAN(nn.Module):
             disc_advantage=forward_advantages.mean().data[0],
             cycle_advantage=cycle_cross_entropy.mean().data[0],
             entropy=entropy.mean().data[0],
-            disc_reward=F.logsigmoid(disc_predictions).mean()
+            disc_reward=F.logsigmoid(disc_predictions).mean().data[0]
         )
 
         return pg_discr_loss, pg_cycle_loss, rev_true_disc_loss, fwd_fake_disc_loss, cycle_cross_entropy.mean(), pg_entropy, advantages
