@@ -135,7 +135,7 @@ class SimpleGRUSupervisedSeq2Seq(nn.Module):
             if strategy == self.GREEDY:
                 tokens = out.max(1)[1]
             elif strategy == self.SAMPLING:
-                tokens = torch.multinomial(F.log_softmax(out, dim=1), 1)[:, 0]
+                tokens = torch.multinomial(F.softmax(out, dim=1), 1)[:, 0]
             else:
                 assert False, "provided value of strategy param is not appropriate"
             if return_logits:
