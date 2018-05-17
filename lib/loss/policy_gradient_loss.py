@@ -12,5 +12,5 @@ def policy_loss(advantages, logits, mask):
     :return:
     """
 
-    policy_term = (logits * mask).sum(axis=1).sum(axis=1)
+    policy_term = (logits * mask).sum(1).sum(1)
     return -(policy_term * advantages.detach()).mean()

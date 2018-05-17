@@ -71,8 +71,8 @@ class CycleGAN(nn.Module):
         forward_advantages = F.logsigmoid(disc_predictions) - F.logsigmoid(baseline_disc_predictions)
 
         logits = logits.contiguous()
-        mask = trg_alphabet.get_mask_for_3D_array(result_sequence, logits).contiguous()
-        normalized_logits = F.log_softmax(logits)
+        mask = trg_alphabet.get_mask_for_3D_array(result_sequence[:, 1:].contiguous(), logits).contiguous()
+        normalized_logits = F.log_softmax(logits, dim=2)
         pg_discr_loss = policy_loss(forward_advantages, normalized_logits, mask)
         pg_cycle_loss = policy_loss(cycle_cross_entropy, normalized_logits, mask)
         entropy = (F.softmax(logits) * normalized_logits * mask).sum(1).sum(1)
