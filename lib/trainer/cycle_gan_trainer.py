@@ -20,6 +20,8 @@ def train_cycle_gan(
         ('trg_bleu_score', dict(xlabel="epochs", smoothed=False)),
         ('src_disc_advantage', dict()),
         ('trg_disc_advantage', dict()),
+        ('src_disc_reward', dict()),
+        ('trg_disc_reward', dict()),
         ('src_disc_loss', dict()),
         ('trg_disc_loss', dict()),
         ('src_cycle_loss', dict()),
@@ -58,8 +60,14 @@ def train_cycle_gan(
             x_sv_log_pred = model.src_gan.gen_model(paired_x, paired_y)
             y_sv_log_pred = model.trg_gan.gen_model(paired_y, paired_x)
 
-            x_sv_loss = cross_entropy(x_sv_log_pred, paired_y[:, 1:].contiguous(), model.trg_gan.gen_model.encoder.alphabet)
-            y_sv_loss = cross_entropy(y_sv_log_pred, paired_x[:, 1:].contiguous(), model.src_gan.gen_model.encoder.alphabet)
+            x_sv_loss = cross_entropy(
+                x_sv_log_pred, paired_y[:, 1:].contiguous(),
+                model.trg_gan.gen_model.encoder.alphabet, reduce_mean=False
+            ).mean()
+            y_sv_loss = cross_entropy(
+                y_sv_log_pred, paired_x[:, 1:].contiguous(),
+                model.src_gan.gen_model.encoder.alphabet
+            ).mean()
 
             update_history(history, dict(
                 src_supervised_ce=x_sv_loss.data[0],
