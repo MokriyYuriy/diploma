@@ -55,11 +55,11 @@ def train_cycle_gan(
             x_disc_loss = x_fake_disc_loss + x_true_disc_loss
             y_disc_loss = y_fake_disc_loss + y_true_disc_loss
 
-            x_sv_log_pred = model.src_gan.gen_model(paired_x)
-            y_sv_log_pred = model.trg_gan.gen_model(paired_y)
+            x_sv_log_pred = model.src_gan.gen_model(paired_x, paired_y)
+            y_sv_log_pred = model.trg_gan.gen_model(paired_y, paired_x)
 
-            x_sv_loss = cross_entropy(x_sv_log_pred, paired_y[:, 1:].contiguos(), model.trg_gan.gen_model.alphabet)
-            y_sv_loss = cross_entropy(y_sv_log_pred, paired_x[:, 1:].contiguos(), model.src_gan.gen_model.alphabet)
+            x_sv_loss = cross_entropy(x_sv_log_pred, paired_y[:, 1:].contiguous(), model.trg_gan.gen_model.encoder.alphabet)
+            y_sv_loss = cross_entropy(y_sv_log_pred, paired_x[:, 1:].contiguous(), model.src_gan.gen_model.encoder.alphabet)
 
             update_history(history, dict(
                 src_supervised_ce=x_sv_loss.data[0],
@@ -67,7 +67,7 @@ def train_cycle_gan(
                 src_disc_advantage=x_advantages['disc_advantage'],
                 trg_disc_advantage=y_advantages['disc_advantage'],
                 src_disc_loss=x_disc_loss.data[0],
-                trg_disc_loss=y_disc_loss.data[1],
+                trg_disc_loss=y_disc_loss.data[0],
                 src_cycle_loss=x_cycle_ce.data[0],
                 trg_cycle_loss=y_cycle_ce.data[0],
                 src_entropy=x_advantages['entropy'],
@@ -104,7 +104,7 @@ def train_cycle_gan(
         trg_epoch_bleu = compute_corpus_bleu_score(model.trg_gan.gen_model, val_trg_words, val_src_words)
         update_history(history, dict(
             src_bleu_score=src_epoch_bleu,
-            trg_epoch_bleu=trg_epoch_bleu
+            trg_bleu_score=trg_epoch_bleu
         ))
         plot_history(history)
         torch.save(model.state_dict(),

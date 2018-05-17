@@ -14,7 +14,7 @@ DEFAULT_SETTINGS = dict(
 def plot_history(history):
     clear_output()
     rows = (len(history) + 1) // 2
-    plt.figure(figsize=(14, 4 * rows))
+    plt.figure(figsize=(14, 6 * rows))
     for i, (key, value) in enumerate(history.items()):
         values, settings = value
         plt.subplot(rows, 2, i + 1)
