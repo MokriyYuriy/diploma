@@ -66,7 +66,7 @@ def train_cycle_gan(
             ).mean()
             y_sv_loss = cross_entropy(
                 y_sv_log_pred, paired_x[:, 1:].contiguous(),
-                model.src_gan.gen_model.encoder.alphabet
+                model.src_gan.gen_model.encoder.alphabet, reduce_mean=False
             ).mean()
 
             update_history(history, dict(
@@ -74,6 +74,8 @@ def train_cycle_gan(
                 trg_supervised_ce=y_sv_loss.data[0],
                 src_disc_advantage=x_advantages['disc_advantage'],
                 trg_disc_advantage=y_advantages['disc_advantage'],
+                src_disc_reward=x_advantages['disc_reward'],
+                trg_disc_reward=x_advantages['disc_reward'],
                 src_disc_loss=x_disc_loss.data[0],
                 trg_disc_loss=y_disc_loss.data[0],
                 src_cycle_loss=x_cycle_ce.data[0],
@@ -107,6 +109,7 @@ def train_cycle_gan(
 
             if i % update_plot_freq + 1 == update_plot_freq:
                 plot_history(history)
+                
         model.eval()
         src_epoch_bleu = compute_corpus_bleu_score(model.src_gan.gen_model, val_src_words, val_trg_words)
         trg_epoch_bleu = compute_corpus_bleu_score(model.trg_gan.gen_model, val_trg_words, val_src_words)
