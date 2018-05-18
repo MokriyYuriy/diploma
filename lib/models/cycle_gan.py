@@ -10,13 +10,9 @@ class GAN(nn.Module):
         self.gen_model = gen_model
         self.disc_model = disc_model
 
-    def baseline_forward(self, input_sequence):
-        baseline_sequence = self.gen_model.translate(input_sequence, strategy='greedy')
-        return self.disc_model(baseline_sequence.detach())
-
-    def src_forward(self, input_sequence):
+    def src_forward(self, input_sequence, strategy):
         result_sequence, logits \
-            = self.gen_model.translate(input_sequence, strategy='sampling', return_logits=True)
+            = self.gen_model.translate(input_sequence, strategy=strategy, return_logits=True)
         disc_predictions = self.disc_model(result_sequence.detach())
         return disc_predictions, result_sequence, logits
 
@@ -35,10 +31,13 @@ class CycleGAN(nn.Module):
             src_gan, trg_gan = self.trg_gan, self.src_gan
         else:
             src_gan, trg_gan = self.src_gan, self.trg_gan
-        disc_predictions, result_sequence, logits = src_gan.src_forward(input_sequence)
-        baseline_disc_predictions = src_gan.baseline_forward(input_sequence)
+        disc_predictions, result_sequence, logits = src_gan.src_forward(input_sequence, strategy='sampling')
+        baseline_disc_predictions, baseline_result_sequence, _ \
+            = src_gan.src_forward(input_sequence, strategy='greedy')
+
         reversed_logits = trg_gan.gen_model(result_sequence, input_sequence[:, 1:].contiguous())
-        return disc_predictions, result_sequence, logits, baseline_disc_predictions, reversed_logits
+        return disc_predictions, result_sequence, logits, \
+               baseline_disc_predictions, baseline_result_sequence, reversed_logits
 
     def disc_forward(self, output_sequence, reversed=False):
         if reversed:
@@ -52,8 +51,15 @@ class CycleGAN(nn.Module):
         else:
             src_gan, trg_gan = self.src_gan, self.trg_gan
 
-        disc_predictions, result_sequence, logits, baseline_disc_predictions, reversed_logits \
-            = self.forward(input_sequence, reversed)
+        (
+            disc_predictions,
+            result_sequence,
+            logits,
+            baseline_disc_predictions,
+            baseline_result_sequence,
+            reversed_logits
+        ) = self.forward(input_sequence, reversed)
+
         src_alphabet = src_gan.gen_model.encoder.alphabet
         trg_alphabet = trg_gan.gen_model.encoder.alphabet
 
@@ -68,19 +74,27 @@ class CycleGAN(nn.Module):
             reduce_mean=False
         )
 
+        baseline_cycle_cross_entropy = cross_entropy(
+            trg_gan.gen_model(baseline_result_sequence.detach(), input_sequence),
+            input_sequence[:, 1:].contiguous(),
+            src_alphabet,
+            reduce_mean=False
+        )
+
         forward_advantages = F.logsigmoid(disc_predictions) - F.logsigmoid(baseline_disc_predictions)
+        cycle_advantages = cycle_cross_entropy - baseline_cycle_cross_entropy
 
         logits = logits.contiguous()
         mask = trg_alphabet.get_mask_for_3D_array(result_sequence[:, 1:].contiguous(), logits).contiguous()
         normalized_logits = F.log_softmax(logits, dim=2)
         pg_discr_loss = policy_loss(forward_advantages, normalized_logits, mask)
-        pg_cycle_loss = policy_loss(cycle_cross_entropy, normalized_logits, mask)
+        pg_cycle_loss = policy_loss(cycle_advantages, normalized_logits, mask)
         entropy = -(F.softmax(logits, dim=2) * normalized_logits * mask).sum(1).sum(1)
         pg_entropy = policy_loss(-entropy, normalized_logits, mask)
 
         advantages = dict(
             disc_advantage=forward_advantages.mean().data[0],
-            cycle_advantage=cycle_cross_entropy.mean().data[0],
+            cycle_advantage=cycle_advantages.mean().data[0],
             entropy=entropy.mean().data[0],
             disc_reward=F.logsigmoid(disc_predictions).mean().data[0]
         )
