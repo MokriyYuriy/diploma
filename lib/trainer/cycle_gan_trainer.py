@@ -31,7 +31,9 @@ def train_cycle_gan(
         ('src_entropy', dict()),
         ('trg_entropy', dict()),
         ('backprop_grad_norm', dict()),
-        ('rl_grad_norm', dict())
+        ('rl_grad_norm', dict()),
+        ('src_cycle_advantage', dict()),
+        ('trg_cycle_advantage', dict())
     ])
 
     model.eval()
@@ -93,7 +95,9 @@ def train_cycle_gan(
                 src_cycle_loss=x_cycle_ce.data[0],
                 trg_cycle_loss=y_cycle_ce.data[0],
                 src_entropy=x_advantages['entropy'],
-                trg_entropy=y_advantages['entropy']
+                trg_entropy=y_advantages['entropy'],
+                src_cycle_advantage=x_advantages['cycle_advantage'],
+                trg_cycle_advantage=y_advantages['cycle_advantage'],
             ))
 
             sv_loss = x_sv_loss + y_sv_loss
