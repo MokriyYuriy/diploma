@@ -16,8 +16,8 @@ def compute_cycle_corpus_bleu_score(forward_model, reversed_model, words, batch_
     translations = []
     for i in range(0, len(words), batch_size):
         translations.extend(
-            forward_model.translate(
-                reversed_model.translate(words[i:i+batch_size], with_start_end=False),
+            reversed_model.translate(
+                forward_model.translate(words[i:i+batch_size], with_start_end=False),
                 with_start_end=False
             )
         )
