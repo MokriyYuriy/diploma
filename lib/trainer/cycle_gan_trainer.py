@@ -4,7 +4,7 @@ import torch
 from torch.autograd import Variable
 
 from ..loss import cross_entropy
-from ..metrics import compute_corpus_bleu_score
+from ..metrics import compute_corpus_bleu_score, compute_cycle_corpus_bleu_score
 from ..utils import batch_iterator, build_history, plot_history, update_history
 
 
@@ -18,6 +18,8 @@ def train_cycle_gan(
         ('trg_supervised_ce', dict()),
         ('src_bleu_score', dict(xlabel="epochs", smoothed=False)),
         ('trg_bleu_score', dict(xlabel="epochs", smoothed=False)),
+        ('src_cycle_bleu_score', dict(xlabel="epochs", smoothed=False)),
+        ('trg_cycle_bleu_score', dict(xlabel="epochs", smoothed=False)),
         ('src_disc_advantage', dict()),
         ('trg_disc_advantage', dict()),
         ('src_disc_reward', dict()),
@@ -121,9 +123,17 @@ def train_cycle_gan(
         model.eval()
         src_epoch_bleu = compute_corpus_bleu_score(model.src_gan.gen_model, val_src_words, val_trg_words)
         trg_epoch_bleu = compute_corpus_bleu_score(model.trg_gan.gen_model, val_trg_words, val_src_words)
+        src_epoch_cycle_bleu = compute_cycle_corpus_bleu_score(
+            model.src_gan.gen_model, model.trg_gan.gen_model, val_src_words
+        )
+        trg_epoch_cycle_bleu = compute_cycle_corpus_bleu_score(
+            model.trg_gan.gen_model, model.src_gan.gen_model, val_trg_words
+        )
         update_history(history, dict(
             src_bleu_score=src_epoch_bleu,
-            trg_bleu_score=trg_epoch_bleu
+            trg_bleu_score=trg_epoch_bleu,
+            src_cycle_bleu_score=src_epoch_cycle_bleu,
+            trg_cycle_bleu_score=trg_epoch_cycle_bleu
         ))
 
         plot_history(history)
