@@ -20,7 +20,6 @@ class BiLSTMDiscriminator(nn.Module):
         idx = idx.max(1, keepdim=True)[0] - idx
         return torch.gather(input_sequence, 1, idx).detach()
 
-
     def forward(self, input_sequence):
         batch_size = input_sequence.size(0)
         mask = self.alph.get_mask(input_sequence)

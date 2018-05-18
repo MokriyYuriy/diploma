@@ -130,3 +130,4 @@ def train_cycle_gan(
         torch.save(model.state_dict(),
                    os.path.join(checkpoints_folder, "state_dict_{}_{}_{}.pth".format(
                        epoch, src_epoch_bleu, trg_epoch_bleu)))
+    return history
