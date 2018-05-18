@@ -82,7 +82,7 @@ class CycleGAN(nn.Module):
         )
 
         forward_advantages = F.logsigmoid(disc_predictions) - F.logsigmoid(baseline_disc_predictions)
-        cycle_advantages = cycle_cross_entropy - baseline_cycle_cross_entropy
+        cycle_advantages = baseline_cycle_cross_entropy - cycle_cross_entropy
 
         logits = logits.contiguous()
         mask = trg_alphabet.get_mask_for_3D_array(result_sequence[:, 1:].contiguous(), logits).contiguous()
