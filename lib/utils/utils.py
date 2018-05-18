@@ -35,9 +35,6 @@ def clip_grad_norm_(parameters, max_norm, norm_type=2):
     Just a copy of function from newer version of pytorch
     """
 
-    if max_norm is None:
-        return
-
     parameters = list(filter(lambda p: p.grad is not None, parameters))
     max_norm = float(max_norm)
     norm_type = float(norm_type)
@@ -49,8 +46,9 @@ def clip_grad_norm_(parameters, max_norm, norm_type=2):
             param_norm = p.grad.data.norm(norm_type)
             total_norm += param_norm ** norm_type
         total_norm = total_norm ** (1. / norm_type)
-    clip_coef = max_norm / (total_norm + 1e-6)
-    if clip_coef < 1:
-        for p in parameters:
-            p.grad.data.mul_(clip_coef.item())
+    if max_norm is not None:
+        clip_coef = max_norm / (total_norm + 1e-6)
+        if clip_coef < 1:
+            for p in parameters:
+                p.grad.data.mul_(clip_coef)
     return total_norm
