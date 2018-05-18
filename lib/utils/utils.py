@@ -29,3 +29,28 @@ def inplace_clip_gradient(model, max_norm=1.0):
         if param.grad is None:
             continue
         param.grad.data = param.grad.data.clamp(-max_norm, max_norm)
+
+def clip_grad_norm_(parameters, max_norm, norm_type=2):
+    """
+    Just a copy of function from newer version of pytorch
+    """
+
+    if max_norm is None:
+        return
+
+    parameters = list(filter(lambda p: p.grad is not None, parameters))
+    max_norm = float(max_norm)
+    norm_type = float(norm_type)
+    if norm_type == float('inf'):
+        total_norm = max(p.grad.data.abs().max() for p in parameters)
+    else:
+        total_norm = 0
+        for p in parameters:
+            param_norm = p.grad.data.norm(norm_type)
+            total_norm += param_norm ** norm_type
+        total_norm = total_norm ** (1. / norm_type)
+    clip_coef = max_norm / (total_norm + 1e-6)
+    if clip_coef < 1:
+        for p in parameters:
+            p.grad.data.mul_(clip_coef.item())
+    return total_norm

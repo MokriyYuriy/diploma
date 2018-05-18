@@ -5,12 +5,12 @@ from torch.autograd import Variable
 
 from ..loss import cross_entropy
 from ..metrics import compute_corpus_bleu_score, compute_cycle_corpus_bleu_score
-from ..utils import batch_iterator, build_history, plot_history, update_history
+from ..utils import batch_iterator, build_history, plot_history, update_history, clip_grad_norm_
 
 
 def train_cycle_gan(
     model, backprop_opt, rl_opt, paired_X, paired_Y, single_X, single_Y, val_src_words, val_trg_words,
-    n_epochs=5, samples_per_epoch=10000, batch_size=32, use_cuda=False, coef=None, update_plot_freq=50,
+    n_epochs=5, samples_per_epoch=10000, batch_size=32, max_norm=None, use_cuda=False, coef=None, update_plot_freq=50,
     checkpoints_folder=None
 ):
     history = build_history([
@@ -30,6 +30,8 @@ def train_cycle_gan(
         ('trg_cycle_loss', dict()),
         ('src_entropy', dict()),
         ('trg_entropy', dict()),
+        ('backprop_grad_norm', dict()),
+        ('rl_grad_norm', dict())
     ])
 
     model.eval()
@@ -110,12 +112,19 @@ def train_cycle_gan(
                       + coef['pg_entropy'] * pg_entropy
 
             backprop_loss.backward()
+            backrop_grad_norm = clip_grad_norm_(model.parameters(), max_norm=max_norm)
             backprop_opt.step()
             backprop_opt.zero_grad()
 
             rl_loss.backward()
+            rl_grad_norm = clip_grad_norm_(model.parameters(), max_norm=max_norm)
             rl_opt.step()
             rl_opt.zero_grad()
+
+            update_history(history, dict(
+                backprop_grad_norm=backrop_grad_norm,
+                rl_grad_norm=rl_grad_norm
+            ))
 
             if i % update_plot_freq + 1 == update_plot_freq:
                 plot_history(history)
