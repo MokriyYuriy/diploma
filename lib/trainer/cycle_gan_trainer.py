@@ -45,7 +45,7 @@ def train_cycle_gan(
         trg_bleu_score=trg_epoch_bleu
     ))
 
-
+    rl_grad_norm = 0
     for epoch in range(n_epochs):
         model.train()
         for i, (single_batch, paired_batch) in enumerate(zip(
@@ -115,7 +115,6 @@ def train_cycle_gan(
             rl_loss = coef['pg_disc_loss'] * pg_disc_loss \
                       + coef['pg_cycle_loss'] * pg_cycle_loss \
                       + coef['pg_entropy'] * pg_entropy
-            rl_grad_norm = 0
             if i % 2 == 0:
                 backprop_loss.backward()
                 backrop_gen_grad_norm = clip_grad_norm_(
