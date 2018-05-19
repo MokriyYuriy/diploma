@@ -19,7 +19,7 @@ def train_discriminator(disc_model, gen_model, opt, train_X, train_Y, n_epochs=5
                 targets = targets.cuda()
             real_data_pred = disc_model(targets)
             #print(targets.shape, gen_model.translate(inputs).shape)
-            gen_data_pred = disc_model(gen_model.translate(inputs).detach())
+            gen_data_pred = disc_model(gen_model.translate(inputs, strategy='sampling').detach())
             #print(targets, gen_model.translate(inputs), real_data_pred, gen_data_pred)
             #print(gen_data_pred)
             #print(real_data_pred)
