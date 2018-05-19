@@ -115,7 +115,7 @@ def train_cycle_gan(
             rl_loss = coef['pg_disc_loss'] * pg_disc_loss \
                       + coef['pg_cycle_loss'] * pg_cycle_loss \
                       + coef['pg_entropy'] * pg_entropy
-
+            rl_grad_norm = 0
             if i % 2 == 0:
                 backprop_loss.backward()
                 backrop_gen_grad_norm = clip_grad_norm_(
