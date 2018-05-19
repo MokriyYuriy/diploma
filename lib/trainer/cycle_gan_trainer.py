@@ -1,4 +1,5 @@
 import os
+from itertools import chain
 
 import torch
 from torch.autograd import Variable
@@ -115,15 +116,25 @@ def train_cycle_gan(
                       + coef['pg_cycle_loss'] * pg_cycle_loss \
                       + coef['pg_entropy'] * pg_entropy
 
-            backprop_loss.backward()
-            backrop_grad_norm = clip_grad_norm_(model.parameters(), max_norm=max_norm)
-            backprop_opt.step()
-            backprop_opt.zero_grad()
+            if i % 2 == 0:
+                backprop_loss.backward()
+                backrop_gen_grad_norm = clip_grad_norm_(
+                    chain(model.src_gan.gen_model.parameters(), model.trg_gan.gen_model.parameters()),
+                    max_norm=max_norm
+                )
+                backrop_disc_grad_norm = clip_grad_norm_(
+                    chain(model.src_gan.disc_model.parameters(), model.trg_gan.disc_model.parameters()),
+                    max_norm=max_norm
+                )
+                backrop_grad_norm = backrop_gen_grad_norm + backrop_disc_grad_norm
+                backprop_opt.step()
+                backprop_opt.zero_grad()
 
-            rl_loss.backward()
-            rl_grad_norm = clip_grad_norm_(model.parameters(), max_norm=max_norm)
-            rl_opt.step()
-            rl_opt.zero_grad()
+            else:
+                rl_loss.backward()
+                rl_grad_norm = clip_grad_norm_(model.parameters(), max_norm=max_norm)
+                rl_opt.step()
+                rl_opt.zero_grad()
 
             update_history(history, dict(
                 backprop_grad_norm=backrop_grad_norm,
