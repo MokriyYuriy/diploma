@@ -104,6 +104,7 @@ venv.bak/
 
 # checkpoints
 checkpoints/
+checkpoints
 
 # idea
 .idea/
