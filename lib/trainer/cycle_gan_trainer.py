@@ -90,7 +90,7 @@ def train_cycle_gan(
                 src_disc_advantage=x_advantages['disc_advantage'],
                 trg_disc_advantage=y_advantages['disc_advantage'],
                 src_disc_reward=x_advantages['disc_reward'],
-                trg_disc_reward=x_advantages['disc_reward'],
+                trg_disc_reward=y_advantages['disc_reward'],
                 src_disc_loss=x_disc_loss.data[0],
                 trg_disc_loss=y_disc_loss.data[0],
                 src_cycle_loss=x_cycle_ce.data[0],
