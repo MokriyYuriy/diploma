@@ -8,7 +8,7 @@ from ..loss import disc_cross_entropy
 
 def train_discriminator(
     disc_model, gen_model, opt, train_X, train_Y, n_epochs=50,
-    update_plot_freq=50, alpha=0.01, clipping=1.0, use_cuda=False
+    update_plot_freq=50, clipping=1.0, use_cuda=False
 ):
     history = build_history([("disc_loss", dict())])
     for epoch in range(n_epochs):
@@ -26,7 +26,7 @@ def train_discriminator(
             #print(targets, gen_model.translate(inputs), real_data_pred, gen_data_pred)
             #print(gen_data_pred)
             #print(real_data_pred)
-            loss = disc_cross_entropy(real_data_pred, gen_data_pred, alpha=alpha)
+            loss = disc_cross_entropy(real_data_pred, gen_data_pred, alpha=disc_model.alpha)
             update_history(history, dict(disc_loss=loss.data[0]))
             loss.backward()
             inplace_clip_gradient(disc_model, clipping)
